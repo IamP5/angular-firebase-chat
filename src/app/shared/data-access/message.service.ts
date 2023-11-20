@@ -1,10 +1,12 @@
 import { Injectable, computed, inject, signal } from "@angular/core";
 import { Message } from "../interfaces/message";
 import { FIRESTORE } from "../../app.config";
-import { collectionData } from 'rxfire/firestore';
+import { collectionData } from "rxfire/firestore";
 import { addDoc, collection, limit, orderBy, query } from "firebase/firestore";
-import { Observable, Subject, catchError, defer, exhaustMap, ignoreElements, map, merge, of } from "rxjs";
-import { connect } from 'ngxtension/connect';
+import { Observable, Subject, catchError, defer, exhaustMap, filter, ignoreElements, map, merge, of, retry } from "rxjs";
+import { toObservable } from "@angular/core/rxjs-interop";
+import { connect } from "ngxtension/connect";
+import { AuthService } from "./auth.service";
 
 interface MessageState {
   messages: Message[];
@@ -16,9 +18,17 @@ interface MessageState {
 })
 export class MessageService {
   private firestore = inject(FIRESTORE);
+  private authService = inject(AuthService);
 
+  private authUser$ = toObservable(this.authService.user);
+  
   // sources
-  messages$ = this.getMessages();
+  messages$ = this.getMessages().pipe(
+    // restart stream when user reauthenticates
+    retry({
+      delay: () => this.authUser$.pipe(filter((user) => !!user)),
+    })
+  );
   add$ = new Subject<Message['content']>();
 
   // state
@@ -58,8 +68,8 @@ export class MessageService {
   }
 
   private addMessage(message: string) {
-    const newMessage: Message = {
-      author: 'me@test.com',
+    const newMessage = {
+      author: this.authService.user()?.email,
       content: message,
       created: Date.now().toString(),
     };
