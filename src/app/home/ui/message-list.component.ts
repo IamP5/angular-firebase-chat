@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild, effect, signal } from '@angular/core';
 import { Message } from '../../shared/interfaces/message';
 import { NgStyle } from '@angular/common';
 import { AuthUser } from '../../shared/data-access/auth.service';
+import { CdkScrollable, ScrollingModule } from '@angular/cdk/scrolling';
 
 @Component({
   standalone: true,
   selector: 'app-message-list',
   template: `
-    <ul class="gradient-bg">
-      @for (message of messages; track message.created){
+    <ul cdkScrollable class="gradient-bg">
+      @for (message of messageSignal(); track message.created){
         <li
           [ngStyle]="{
             'flex-direction':
@@ -62,9 +63,26 @@ import { AuthUser } from '../../shared/data-access/auth.service';
       filter: drop-shadow(2px 4px 3px var(--primary-darker-color));
     }
   `,
-  imports: [NgStyle],
+  imports: [NgStyle, ScrollingModule],
 })
 export class MessageListComponent {
+  messageSignal = signal<Message[]>([]);
+
+  @Input({ required: true }) set messages(value: Message[]) {
+    this.messageSignal.set(value);
+  }
+
   @Input({ required: true }) activeUser!: AuthUser;
-  @Input({ required: true }) messages!: Message[];
+  @ViewChild(CdkScrollable) scrollContainer!: CdkScrollable;
+
+  constructor() {
+    effect(() => {
+      if (this.messageSignal().length && this.scrollContainer) {
+        this.scrollContainer.scrollTo({ 
+          bottom: 0,
+          behavior: 'smooth' 
+        });
+      }
+    })
+  }
 }
