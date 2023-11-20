@@ -10,11 +10,15 @@ import { LoginService } from './data-access/login.service';
   selector: 'app-login',
   template: `
     <div class="container gradient-bg">
-      <app-login-form
-        [loginStatus]="loginService.status()"
-        (login)="loginService.login$.next($event)"
-      />
-      <a routerLink="/auth/register">Create account</a>
+      @if(authService.user() === null){
+        <app-login-form
+          [loginStatus]="loginService.status()"
+          (login)="loginService.login$.next($event)"
+        />
+        <a routerLink="/auth/register">Create account</a>
+      } @else {
+        <mat-spinner diameter="50" />
+      }
     </div>
   `,
   providers: [LoginService],
