@@ -1,5 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Message } from '../../shared/interfaces/message';
+import { NgStyle } from '@angular/common';
+import { AuthUser } from '../../shared/data-access/auth.service';
 
 @Component({
   standalone: true,
@@ -7,7 +9,12 @@ import { Message } from '../../shared/interfaces/message';
   template: `
     <ul class="gradient-bg">
       @for (message of messages; track message.created){
-        <li>
+        <li
+          [ngStyle]="{
+            'flex-direction':
+              message.author === activeUser?.email ? 'row-reverse' : 'row'
+          }"
+        >
           <div class="avatar animate-in-primary">
             <img
               src="https://api.dicebear.com/7.x/bottts/svg?seed={{
@@ -55,7 +62,9 @@ import { Message } from '../../shared/interfaces/message';
       filter: drop-shadow(2px 4px 3px var(--primary-darker-color));
     }
   `,
+  imports: [NgStyle],
 })
 export class MessageListComponent {
+  @Input({ required: true }) activeUser!: AuthUser;
   @Input({ required: true }) messages!: Message[];
 }

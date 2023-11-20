@@ -19,7 +19,9 @@ import { MatButtonModule } from '@angular/material/button';
           <mat-icon>logout</mat-icon>
         </button>
       </mat-toolbar>
-      <app-message-list [messages]="messageService.messages()" />
+      <app-message-list 
+        [activeUser]="authService.user()"
+        [messages]="messageService.messages()" />
       <app-message-input (send)="messageService.add$.next($event)" />
     </div>
   `,
